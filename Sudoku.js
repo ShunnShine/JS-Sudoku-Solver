@@ -70,91 +70,12 @@ class board {
     }
 
     solve() {
-        var x = 8;                  //
-        var y = 8;                  //makes the variables I'll need
-        var sudoku = this.sudoku;     //I made it do this becuase of permissions inside of the functions below since they are unable to see the this.sudoku variable. It is not ideal and should be fixed.
+        this.listenForChanges = false;
+        var sudoku = this.sudoku;    
         var slider = document.getElementById("timingSlider");
-
-
-
-
-        function nextEmpty() {   //sets the x and y variables to the next unsolved square
-            do {
-                if (x == 8) {
-                    y++;
-                    x = 0;
-                }
-                else
-                    x++;
-            } while (sudoku[x][y].getKnown());
-
-        }
-        function previousEmpty() {  //sets the x and y variables to the previous unknown square
-            do {
-                if (x == 0) {
-                    y--;
-                    x = 8;
-                }
-                else
-                    x--;
-            } while (sudoku[x][y].getKnown());
-        }
-
-        function fill() {   //this trys guesses until it finds one that doesn't conflict anywhere on the board and then saves it to the board.
-            var guess = (sudoku[x][y].getNumber() + 1); //sets the guess to the next number
-
-
-            while (true) {
-
-                if (!(duplicateRow()) && !(duplicateCol()) && !(duplicateBox())) { //if there is no conflicts with the current guess it breaks out of the loop
-                    ctx.clearRect(x * 50 + 3, y * 50 + 3, 45, 45);
-                    ctx.fillText(guess.toString(), x * 50 + 25, y * 50 + 39);
-                    break;
-                }
-                else {
-                    ctx.clearRect(x * 50 + 3, y * 50 + 3, 45, 45);
-                    ctx.fillStyle = "#ff0000";
-                    ctx.fillText(guess.toString(), x * 50 + 25, y * 50 + 39);
-                    ctx.fillStyle = "#000000";
-                    guess++;  // changes guess to next number
-                    if (guess == 10) { break; } //if the guess gets to 10 then it means it's reached a dead end in the solution. it breaks the loop and in a different place will start to back track
-                }
-                sudoku[x][y].setNumber(guess);// saves current guess (this line might not be needed)
-            }
-
-            sudoku[x][y].setNumber(guess); // saves the current guess
-            function duplicateRow() { //checks guess against row for conflicts
-                for (var i = 0; i < 9; i++) {
-                    if (i == x) { continue; }
-                    if (guess == sudoku[i][y].getNumber()) { return true; }
-
-                }
-                return false;
-            }
-            function duplicateCol() { //checks guess against column for conflicts
-                for (var i = 0; i < 9; i++) {
-                    if (i == y) { continue; }
-                    if (guess == sudoku[x][i].getNumber()) { return true; }
-
-                }
-                return false;
-            }
-            function duplicateBox() { //checks guess against 3 by 3 square for conflicts
-                var XboxParam = (~~(x / 3) * 3);
-                var YboxParam = (~~(y / 3) * 3);
-
-                for (var boxY = YboxParam; boxY <= YboxParam + 2; boxY++) {
-                    for (var boxX = XboxParam; boxX <= XboxParam + 2; boxX++) {
-                        if (x == boxX && y == boxY) { continue; }
-                        if (guess == sudoku[boxX][boxY].getNumber()) { return true; }
-                    }
-                }
-                return false;
-            }
-        }
-
-
-
+        var nextGuessAgain = null;
+        var x = 8;                  
+        var y = 8;   
         while (this.sudoku[x][y].getKnown())   //this while loop and the 2 lines under find when the solver should stop running in the case where the last square or squares are already known
         {
             if (x == 0) {
@@ -168,27 +89,94 @@ class board {
         var lasty = y;
         x = 0; y = 0;
 
-        while ((x < lastx) || (y < lasty))  //this is essentially the main. it just calls the fill() over and over until it gets to the last square
-        {
-            if ((x == 0 && y == 0) && this.sudoku[0][0].getKnown()) { nextEmpty(); } //this just moves the starting point to the first unknown if the first square is known
 
+        function nextEmpty() {   //sets the x and y variables to the next unsolved square
+            do {
+                if (x == 8) {
+                    y++;
+                    x = 0;
+                }
+                else
+                    x++;
+            } while (sudoku[x][y].getKnown());
 
-            fill();
-
-
-
-            if (this.sudoku[x][y].getNumber() == 10) {  //this is the catch if the guessed number gets to 10. It just sets the square back to 0 and goes moves the pointer back a square with previousEmpty()
-                this.sudoku[x][y].setNumber(0);
-                ctx.clearRect(x * 50 + 3, y * 50 + 3, 45, 45);
-                previousEmpty();
-            }
-            else { nextEmpty(); }
         }
 
-        fill(); // this fill completes the last square becuase the while loop above does everything except the last square
+        function previousEmpty() {  //sets the x and y variables to the previous unknown square
+            do {
+                if (x == 0) {
+                    y--;
+                    x = 8;
+                }
+                else
+                    x--;
+            } while (sudoku[x][y].getKnown());
+        }
+        
+        function makeGuess(){
+            var guess = (sudoku[x][y].getNumber() + 1);
 
+            function isValid(){  //written by Alex Klein
+                for(let i = 0; i < 9; i++){ //position
+                    var boxY = ~~(y / 3)*3 + ~~(i/3); //row checker for the 3x3 box
+                    var boxX = ~~(x/3)*3 + i % 3; //column checker for the 3x3 box
+                    if(guess == sudoku[i][y].getNumber() || guess == sudoku[x][i].getNumber() || guess == sudoku[boxX][boxY].getNumber()){ //checks if value is found in row, column, and a 3x3 box respectively
+                        return false; //returns false if found
+                    }
+                }
+                return true; //returns true if not found
+            }
 
-        this.sudoku = sudoku; //this just puts the array back into this.sudoku becuase I took it out at the top of this method.
+            if(guess==10){
+                sudoku[x][y].setNumber(guess);
+                return false;
+            }
+            else if(isValid()){
+                ctx.clearRect(x * 50 + 3, y * 50 + 3, 45, 45);
+                ctx.fillText(guess.toString(), x * 50 + 25, y * 50 + 39);
+                sudoku[x][y].setNumber(guess);
+                return false;
+            }
+            else{
+                ctx.clearRect(x * 50 + 3, y * 50 + 3, 45, 45);
+                ctx.fillStyle = "#ff0000";
+                ctx.fillText(guess.toString(), x * 50 + 25, y * 50 + 39);
+                ctx.fillStyle = "#000000";
+                sudoku[x][y].setNumber(guess);
+                return true;
+            }
+
+        }
+
+        function main(guessAgain) {
+            if (x <= lastx || y <= lasty) {
+                if ((x == 0 && y == 0) && sudoku[0][0].getKnown()) { nextEmpty(); }
+                
+                if(guessAgain){
+                    nextGuessAgain = makeGuess();
+                }
+                else if(sudoku[x][y].getNumber() == 10){
+                    sudoku[x][y].setNumber(0);
+                    ctx.clearRect(x * 50 + 3, y * 50 + 3, 45, 45);
+                    previousEmpty();
+                    nextGuessAgain = makeGuess();
+                }
+                else{
+                    nextEmpty();
+                    nextGuessAgain = makeGuess();
+                }
+                
+                setTimeout(function(){main(nextGuessAgain)},slider.value*1000);
+        
+            }
+            else {
+                //this.sudoku = sudoku;
+                return;
+            }
+        }
+        
+        setTimeout(function(){main(true)}, slider.value*1000);
+        
     }
 }
 
@@ -231,11 +219,3 @@ var newBoard = new board;
 document.getElementById("startButton").onclick = function () {
     newBoard.solve();
 }
-/*
-var newBoard = new board;
-var start = performance.now();
-newBoard.solve();
-var end = performance.now();
-newBoard.logBoard();
-console.log(end-start);
-*/
