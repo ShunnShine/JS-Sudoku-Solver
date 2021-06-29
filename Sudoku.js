@@ -74,7 +74,7 @@ class board {
     solve() {
         this.listenForChanges = false;
         var sudoku = this.sudoku;
-        ctx.fillStyle = "grey";
+        ctx.fillStyle = "darkgrey";
         var slider = document.getElementById("timingSlider");
         var nextGuessAgain = null;
         var x = 8;                  
@@ -144,7 +144,7 @@ class board {
                 ctx.clearRect(x * 50 + 3, y * 50 + 3, 45, 45);
                 ctx.fillStyle = "#ff0000";
                 ctx.fillText(guess.toString(), x * 50 + 25, y * 50 + 39);
-                ctx.fillStyle = "grey";
+                ctx.fillStyle = "darkgrey";
                 sudoku[x][y].setNumber(guess);
                 return true;
             }
@@ -179,7 +179,6 @@ class board {
         }
         
         setTimeout(function(){main(true)}, slider.value*1000);
-        ctx.fillStyle = "#000000"; //change color back to black if I want to implement more number changes later
     }
 }
 
