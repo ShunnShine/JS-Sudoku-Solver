@@ -12,9 +12,9 @@
             </canvas>
             <div style="text-align: center;"><input type="range" min="0" max="1" value=".5" step=".1" class="slider" id="timingSlider">
         
-            <br/>
-            The current delay is: <span id="sliderValue">0.5</span> Sec
-            <button id="startButton">Start</button>
+                <br/>
+                The current delay is: <span id="sliderValue">0.5</span> Sec
+                <button id="startButton">Start</button>
             </div>
         </div>
         <script>
